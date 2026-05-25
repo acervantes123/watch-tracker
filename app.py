@@ -1,6 +1,10 @@
 import streamlit as st
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 import streamlit.components.v1 as components
+
+# --------------------------------------------------
+# Configuración
+# --------------------------------------------------
 
 st.set_page_config(
     page_title="Watch Accuracy",
@@ -10,9 +14,9 @@ st.set_page_config(
 
 st.title("⌚ Watch Accuracy Tracker")
 
-# ----------------------------------
-# UTC Clock (JavaScript)
-# ----------------------------------
+# --------------------------------------------------
+# UTC Clock (fluido con JavaScript)
+# --------------------------------------------------
 
 components.html(
     """
@@ -21,13 +25,14 @@ components.html(
         font-size:48px;
         font-weight:bold;
         font-family:monospace;
-        margin-bottom:20px;
+        margin-bottom:10px;
     ">
         UTC
         <div id="utc-clock"></div>
     </div>
 
     <script>
+
     function updateClock() {
 
         const now = new Date();
@@ -56,6 +61,7 @@ components.html(
         updateClock,
         200
     );
+
     </script>
     """,
     height=120
@@ -63,39 +69,38 @@ components.html(
 
 st.divider()
 
-# ----------------------------------
+# --------------------------------------------------
 # Hora observada del reloj
-# ----------------------------------
+# --------------------------------------------------
 
 st.subheader("Hora observada del reloj")
+
+current_time = datetime.now()
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    hour = st.number_input(
+    hour = st.selectbox(
         "Hora",
-        min_value=0,
-        max_value=23,
-        value=12,
-        step=1
+        options=list(range(24)),
+        format_func=lambda x: f"{x:02d}",
+        index=current_time.hour
     )
 
 with col2:
-    minute = st.number_input(
+    minute = st.selectbox(
         "Minuto",
-        min_value=0,
-        max_value=59,
-        value=0,
-        step=1
+        options=list(range(60)),
+        format_func=lambda x: f"{x:02d}",
+        index=current_time.minute
     )
 
 with col3:
-    second = st.number_input(
+    second = st.selectbox(
         "Segundo",
-        min_value=0,
-        max_value=59,
-        value=0,
-        step=1
+        options=list(range(60)),
+        format_func=lambda x: f"{x:02d}",
+        index=current_time.second
     )
 
 watch_time = (
@@ -104,21 +109,22 @@ watch_time = (
     f"{second:02d}"
 )
 
-st.markdown(
-    f"""
-    <h1 style='text-align:center;
-               font-family:monospace'>
-        {watch_time}
-    </h1>
-    """,
-    unsafe_allow_html=True
+st.divider()
+
+# --------------------------------------------------
+# Fecha
+# --------------------------------------------------
+
+measurement_date = st.date_input(
+    "Fecha",
+    value=date.today()
 )
 
 st.divider()
 
-# ----------------------------------
+# --------------------------------------------------
 # Captura
-# ----------------------------------
+# --------------------------------------------------
 
 if st.button(
     "📸 REGISTRAR",
@@ -130,30 +136,38 @@ if st.button(
     )
 
     st.session_state["last_capture"] = {
+        "measurement_date": str(
+            measurement_date
+        ),
         "watch_time": watch_time,
         "utc_capture": utc_capture.isoformat()
     }
 
-# ----------------------------------
+# --------------------------------------------------
 # Resultado
-# ----------------------------------
+# --------------------------------------------------
 
 if "last_capture" in st.session_state:
 
+    capture = st.session_state[
+        "last_capture"
+    ]
+
     st.success(
-        "Registro capturado"
+        "Registro capturado correctamente"
     )
 
     st.write(
-        "Hora reloj:",
-        st.session_state[
-            "last_capture"
-        ]["watch_time"]
+        "Fecha:",
+        capture["measurement_date"]
+    )
+
+    st.write(
+        "Hora del reloj:",
+        capture["watch_time"]
     )
 
     st.write(
         "UTC capturado:",
-        st.session_state[
-            "last_capture"
-        ]["utc_capture"]
+        capture["utc_capture"]
     )
