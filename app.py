@@ -12,7 +12,7 @@ st.set_page_config(
     layout="centered"
 )
 
-st.title("⌚ Watch Accuracy Tracker")
+#st.title("Watch Accuracy Tracker")
 
 # --------------------------------------------------
 # UTC Clock (fluido con JavaScript)
@@ -127,7 +127,7 @@ st.divider()
 # --------------------------------------------------
 
 if st.button(
-    "📸 REGISTRAR",
+    "REGISTRAR",
     use_container_width=True
 ):
 
