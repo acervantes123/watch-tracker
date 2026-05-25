@@ -1,98 +1,159 @@
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
 from datetime import datetime, timezone
+import streamlit.components.v1 as components
 
-# -----------------------------
-# Configuración
-# -----------------------------
 st.set_page_config(
     page_title="Watch Accuracy",
     page_icon="⌚",
     layout="centered"
 )
 
-# Refrescar cada segundo
-st_autorefresh(
-    interval=1000,
-    key="utc_clock"
-)
-
-# -----------------------------
-# Título
-# -----------------------------
 st.title("⌚ Watch Accuracy Tracker")
 
-# -----------------------------
-# Hora UTC actual
-# -----------------------------
-utc_now = datetime.now(timezone.utc)
+# ----------------------------------
+# UTC Clock (JavaScript)
+# ----------------------------------
 
-hh = utc_now.strftime("%H")
-mm = utc_now.strftime("%M")
-ss = utc_now.strftime("%S")
+components.html(
+    """
+    <div style="
+        text-align:center;
+        font-size:48px;
+        font-weight:bold;
+        font-family:monospace;
+        margin-bottom:20px;
+    ">
+        UTC
+        <div id="utc-clock"></div>
+    </div>
 
-# Hora principal
-st.markdown("## UTC NOW")
+    <script>
+    function updateClock() {
+
+        const now = new Date();
+
+        const hh = String(
+            now.getUTCHours()
+        ).padStart(2,'0');
+
+        const mm = String(
+            now.getUTCMinutes()
+        ).padStart(2,'0');
+
+        const ss = String(
+            now.getUTCSeconds()
+        ).padStart(2,'0');
+
+        document.getElementById(
+            "utc-clock"
+        ).innerHTML =
+            hh + ":" + mm + ":" + ss;
+    }
+
+    updateClock();
+
+    setInterval(
+        updateClock,
+        200
+    );
+    </script>
+    """,
+    height=120
+)
+
+st.divider()
+
+# ----------------------------------
+# Hora observada del reloj
+# ----------------------------------
+
+st.subheader("Hora observada del reloj")
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    hour = st.number_input(
+        "Hora",
+        min_value=0,
+        max_value=23,
+        value=12,
+        step=1
+    )
+
+with col2:
+    minute = st.number_input(
+        "Minuto",
+        min_value=0,
+        max_value=59,
+        value=0,
+        step=1
+    )
+
+with col3:
+    second = st.number_input(
+        "Segundo",
+        min_value=0,
+        max_value=59,
+        value=0,
+        step=1
+    )
+
+watch_time = (
+    f"{hour:02d}:"
+    f"{minute:02d}:"
+    f"{second:02d}"
+)
 
 st.markdown(
     f"""
-    <h1 style='text-align:center;'>
-        {hh}:{mm}:{ss}
+    <h1 style='text-align:center;
+               font-family:monospace'>
+        {watch_time}
     </h1>
     """,
     unsafe_allow_html=True
 )
 
-# Milisegundos
-st.markdown(
-    f"""
-    <div style='text-align:center;
-                font-size:24px;
-                font-family:monospace;'>
-        {utc_now.strftime("%H:%M:%S.%f")[:-3]}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 st.divider()
 
-# -----------------------------
-# HH MM SS separados
-# -----------------------------
-c1, c2, c3 = st.columns(3)
+# ----------------------------------
+# Captura
+# ----------------------------------
 
-with c1:
-    st.metric("HH", hh)
-
-with c2:
-    st.metric("MM", mm)
-
-with c3:
-    st.metric("SS", ss)
-
-st.divider()
-
-# -----------------------------
-# Captura de referencia
-# -----------------------------
 if st.button(
-    "📸 REGISTRAR AHORA",
+    "📸 REGISTRAR",
     use_container_width=True
 ):
-    st.session_state["captured_utc"] = (
-        datetime.now(timezone.utc)
+
+    utc_capture = datetime.now(
+        timezone.utc
     )
 
-# Mostrar captura congelada
-if "captured_utc" in st.session_state:
+    st.session_state["last_capture"] = {
+        "watch_time": watch_time,
+        "utc_capture": utc_capture.isoformat()
+    }
 
-    captured = st.session_state["captured_utc"]
+# ----------------------------------
+# Resultado
+# ----------------------------------
 
-    st.success("UTC capturado correctamente")
+if "last_capture" in st.session_state:
 
-    st.code(
-        captured.strftime(
-            "%Y-%m-%d %H:%M:%S.%f UTC"
-        )[:-3]
+    st.success(
+        "Registro capturado"
+    )
+
+    st.write(
+        "Hora reloj:",
+        st.session_state[
+            "last_capture"
+        ]["watch_time"]
+    )
+
+    st.write(
+        "UTC capturado:",
+        st.session_state[
+            "last_capture"
+        ]["utc_capture"]
     )
